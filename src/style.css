@@ -1,0 +1,653 @@
+:root {
+  /* 深色云会议设计系统（默认） */
+  color-scheme: dark;
+  --bg-0: #07090d;
+  --bg-1: #242424;
+  --bg-2: #2b2b2b;
+  --panel: #292929;
+  --panel-solid: #242424;
+  --line: rgba(148, 163, 184, 0.14);
+  --line-strong: rgba(148, 163, 184, 0.28);
+  --text-hi: #eaf0f8;
+  --text-mid: #9fb0c3;
+  --text-low: #5d6b7d;
+  --accent: #38bdf8;
+  --accent-strong: #0ea5e9;
+  --accent-soft: rgba(56, 189, 248, 0.14);
+  --accent-glow: rgba(56, 189, 248, 0.35);
+  --ok: #34d399;
+  --warn: #fbbf24;
+  --danger: #f87171;
+  /* 页面常驻深色层的附加变量（工具栏/弹窗/遮罩等） */
+  --toolbar-bg: rgba(15, 20, 30, 0.95);
+  --chrome-bg: rgba(12, 16, 23, 0.86);
+  --overlay-bg: rgba(4, 6, 10, 0.72);
+  --radius-lg: 20px;
+  --radius-md: 14px;
+  --radius-sm: 10px;
+  --font-display: 'Noto Sans SC Variable', 'Sora', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-body: 'Noto Sans SC Variable', 'Sora', 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+  --font-mono: 'Sora', ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  --shadow-card: 0 24px 60px -24px rgba(0, 0, 0, 0.65);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --custom-toolbar-height: 60px;
+}
+
+/* 浅色主题（桌面端默认）：仅覆盖变量，任何组件都无需单独改色 */
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg-0: #f3f5f9;
+  --bg-1: #ffffff;
+  --bg-2: #f3f3f3;
+  --panel: #f8f8f8;
+  --panel-solid: #ffffff;
+  --line: rgba(15, 23, 42, 0.12);
+  --line-strong: rgba(15, 23, 42, 0.24);
+  --text-hi: #16202e;
+  --text-mid: #47566d;
+  --text-low: #8291a6;
+  --accent: #0ea5e9;
+  --accent-strong: #0284c7;
+  --accent-soft: rgba(14, 165, 233, 0.14);
+  --accent-glow: rgba(14, 165, 233, 0.3);
+  --ok: #10b981;
+  --warn: #d97706;
+  --danger: #e5484d;
+  --toolbar-bg: rgba(255, 255, 255, 0.86);
+  --chrome-bg: rgba(255, 255, 255, 0.86);
+  --overlay-bg: rgba(15, 23, 42, 0.4);
+  --shadow-card: 0 24px 60px -24px rgba(15, 23, 42, 0.24);
+}
+
+/* 会议页统一浅色样式：MeetingView / DesktopMeetingView（含 MeetingStage）无论全局深浅主题，
+   会议场景固定使用浅色方案，加在页面根节点即可让整页（顶栏/工具栏/弹窗/面板）生效。 */
+.meeting-light {
+  color-scheme: light;
+  --bg-0: #f3f5f9;
+  --bg-1: #eaeef4;
+  --bg-2: #dfe5ee;
+  --panel: rgba(255, 255, 255, 0.85);
+  --panel-solid: #ffffff;
+  --line: rgba(15, 23, 42, 0.12);
+  --line-strong: rgba(15, 23, 42, 0.24);
+  --text-hi: #16202e;
+  --text-mid: #47566d;
+  --text-low: #8291a6;
+  --accent: #0ea5e9;
+  --accent-strong: #0284c7;
+  --accent-soft: rgba(14, 165, 233, 0.14);
+  --accent-glow: rgba(14, 165, 233, 0.3);
+  --ok: #10b981;
+  --warn: #d97706;
+  --danger: #e5484d;
+  --toolbar-bg: rgba(255, 255, 255, 0.86);
+  --chrome-bg: rgba(255, 255, 255, 0.86);
+  --overlay-bg: rgba(15, 23, 42, 0.4);
+  --shadow-card: 0 24px 60px -24px rgba(15, 23, 42, 0.24);
+}
+
+/* 主题切换入口：后续页面开关调用 window.setTheme('light' | 'dark') 即可全局生效 */
+:root {
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--text-hi);
+  font-family: var(--font-body);
+  background:
+    radial-gradient(1200px 700px at 85% -10%, rgba(14, 116, 144, 0.18), transparent 60%),
+    radial-gradient(900px 600px at -10% 110%, rgba(30, 64, 175, 0.16), transparent 55%), var(--bg-0);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+html.desktop-embed,
+html.desktop-embed body,
+html.desktop-embed #app {
+  width: 100%;
+  min-height: 100%;
+}
+
+html.desktop-embed body {
+  background: var(--bg-0);
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+html.desktop-embed #app {
+  height: auto;
+  overflow: visible;
+}
+
+/* 桌面端首页/预约列表需要滚动；进入会议后再锁住页面滚动，避免视频区域被外层页面拖动。 */
+html.desktop-embed.desktop-meeting,
+html.desktop-embed.desktop-meeting body,
+html.desktop-embed.desktop-meeting #app {
+  height: 100%;
+  overflow: hidden;
+}
+html.android-embed {
+  --custom-toolbar-height: calc(68px + env(safe-area-inset-bottom, 0px));
+  background: #ffffff;
+}
+
+html.android-embed body,
+html.android-embed #app {
+  background: #ffffff;
+}
+
+/* Android 全屏 = 隐藏顶部导航栏和底部工具栏；单击视频区域切换，工具栏不再常驻。 */
+
+html.android-embed .custom-toolbar {
+  justify-content: flex-start;
+  gap: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0 max(8px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px)
+    max(8px, env(safe-area-inset-left, 0px));
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+}
+
+/* Android 横屏：按钮整体居中，空间不足时从起点排列以便横向滚动。 */
+@media (orientation: landscape) {
+  html.android-embed .custom-toolbar {
+    justify-content: center;
+    justify-content: safe center;
+  }
+}
+
+html.android-embed .custom-toolbar::-webkit-scrollbar {
+  display: none;
+}
+
+html.android-embed .toolbar-btn {
+  min-width: 64px;
+  padding: 8px 7px;
+  border-radius: 8px;
+}
+
+html.android-embed .toolbar-btn__label {
+  max-width: 62px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 10.5px;
+}
+
+html.android-embed .toolbar-btn--hangup {
+  min-width: 78px;
+}
+
+html.android-embed .toolbar-btn--hangup .toolbar-btn__label {
+  max-width: 72px;
+  font-size: 12px;
+}
+
+html.android-embed .end-trigger-wrap {
+  margin-left: 4px;
+  padding-right: 8px;
+}
+
+html.android-embed .device-pop {
+  position: fixed;
+  left: 8px;
+  right: 8px;
+  bottom: calc(var(--custom-toolbar-height) + 10px);
+  width: auto;
+  max-height: min(340px, calc(100vh - var(--custom-toolbar-height) - 28px));
+}
+
+html.android-embed .end-menu {
+  position: fixed;
+  left: auto;
+  right: 8px;
+  bottom: calc(var(--custom-toolbar-height) + 10px);
+  transform: none;
+}
+
+@media (max-width: 380px) {
+  html.android-embed .toolbar-btn {
+    min-width: 58px;
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+}
+
+
+/* 桌面壳内由 Electron 窗口负责承载页面；根滚动条要单独覆盖，Chromium 不会把 * 选择器应用到 viewport 滚动条。 */
+html.desktop-embed,
+html.desktop-embed body,
+html.desktop-embed * {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(96, 116, 139, 0.5) rgba(7, 9, 13, 0.18);
+}
+
+html.desktop-embed::-webkit-scrollbar,
+html.desktop-embed body::-webkit-scrollbar,
+html.desktop-embed *::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+html.desktop-embed::-webkit-scrollbar-track,
+html.desktop-embed body::-webkit-scrollbar-track,
+html.desktop-embed *::-webkit-scrollbar-track {
+  background: rgba(7, 9, 13, 0.18);
+}
+
+html.desktop-embed::-webkit-scrollbar-thumb,
+html.desktop-embed body::-webkit-scrollbar-thumb,
+html.desktop-embed *::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  border: 3px solid rgba(7, 9, 13, 0.18);
+  background: rgba(96, 116, 139, 0.58);
+  background-clip: padding-box;
+}
+
+html.desktop-embed::-webkit-scrollbar-thumb:hover,
+html.desktop-embed body::-webkit-scrollbar-thumb:hover,
+html.desktop-embed *::-webkit-scrollbar-thumb:hover {
+  background: rgba(125, 211, 252, 0.62);
+  background-clip: padding-box;
+}
+
+html.desktop-embed::-webkit-scrollbar-corner,
+html.desktop-embed body::-webkit-scrollbar-corner,
+html.desktop-embed *::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* 背景网格 + 噪点 */
+.bg-grid {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(148, 163, 184, 0.045) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 90% 70% at 50% 30%, black 40%, transparent 100%);
+  pointer-events: none;
+}
+
+/* 通用按钮 */
+.btn {
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  padding: 12px 22px;
+  cursor: pointer;
+  transition:
+    transform 0.18s var(--ease-out),
+    box-shadow 0.18s var(--ease-out),
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.btn-primary {
+  background: linear-gradient(180deg, #3ec6fb, #0ea5e9);
+  color: #04121d;
+  box-shadow:
+    0 10px 26px -10px var(--accent-glow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow:
+    0 14px 32px -10px var(--accent-glow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+.btn-secondary {
+  background: rgba(56, 189, 248, 0.08);
+  border-color: rgba(56, 189, 248, 0.45);
+  color: var(--accent);
+}
+.btn-secondary:hover:not(:disabled) {
+  background: rgba(56, 189, 248, 0.14);
+  border-color: rgba(56, 189, 248, 0.7);
+  transform: translateY(-1px);
+}
+.btn-secondary:active:not(:disabled) {
+  transform: translateY(0);
+}
+.btn-ghost {
+  background: rgba(148, 163, 184, 0.07);
+  border-color: var(--line);
+  color: var(--text-hi);
+}
+.btn-ghost:hover:not(:disabled) {
+  background: rgba(148, 163, 184, 0.13);
+  border-color: var(--line-strong);
+}
+.btn-danger {
+  background: rgba(248, 113, 113, 0.1);
+  border-color: rgba(248, 113, 113, 0.35);
+  color: var(--danger);
+}
+
+/* 输入框 */
+.field {
+  position: relative;
+}
+.field input {
+  width: 100%;
+  background: rgba(7, 10, 15, 0.6);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--text-hi);
+  font-family: inherit;
+  font-size: 15px;
+  padding: 13px 14px;
+  outline: none;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+.field input::placeholder {
+  color: var(--text-low);
+}
+.field input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.field label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-mid);
+  margin-bottom: 7px;
+  letter-spacing: 0.04em;
+}
+
+/* 弹窗 */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(4, 6, 10, 0.72);
+  backdrop-filter: blur(8px);
+  animation: fade-in 0.22s ease both;
+  padding: 20px;
+}
+.modal {
+  width: min(460px, 100%);
+  background: var(--panel-solid);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  animation: pop-in 0.3s var(--ease-out) both;
+  overflow: hidden;
+}
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 0;
+}
+.modal-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+}
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--text-low);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
+}
+.modal-close:hover {
+  color: var(--text-hi);
+  background: rgba(148, 163, 184, 0.12);
+}
+.modal-body {
+  padding: 20px 24px 24px;
+}
+.modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 0 24px 24px;
+}
+
+/* ---------- 桌面端弹窗（"预定会议"弹窗的视觉语言，其余桌面弹窗共用） ---------- */
+.overlay--desktop {
+  align-items: center;
+  justify-content: center;
+  padding: 18px 20px;
+  background: var(--overlay-bg);
+  backdrop-filter: none;
+}
+
+.modal--desktop {
+  position: relative;
+  width: min(500px, calc(100vw - 40px));
+  max-height: min(688px, calc(100vh - 36px));
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  border-color: var(--line-strong);
+  background: var(--panel-solid);
+  box-shadow: var(--shadow-card);
+}
+
+.modal--desktop--sm {
+  width: min(420px, calc(100vw - 40px));
+}
+
+.modal--desktop .modal-head {
+  flex: 0 0 auto;
+  padding: 22px 24px 12px;
+}
+
+.modal--desktop .modal-title {
+  font-size: 22px;
+  color: var(--text-hi);
+}
+
+.modal--desktop .modal-close {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  color: var(--text-low);
+}
+
+.modal--desktop .modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 4px 24px 16px;
+  overflow-y: auto;
+}
+
+.modal--desktop .modal-foot {
+  flex: 0 0 auto;
+  padding: 16px 24px 18px;
+  border-top: 1px solid var(--line);
+  background: var(--panel-solid);
+}
+
+.modal--desktop .field {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px 10px;
+  margin-bottom: 12px !important;
+}
+
+.modal--desktop .field label {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  margin: 0;
+  color: var(--text-hi);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.modal--desktop .field input {
+  height: 34px;
+  border-radius: 4px;
+  border-color: var(--line-strong);
+  background: var(--bg-1);
+  color: var(--text-hi);
+  padding: 0 11px;
+  font-size: 14px;
+}
+
+.modal--desktop .field input:focus {
+  border-color: #2588ff;
+  box-shadow: 0 0 0 1px #2588ff;
+}
+
+.modal--desktop .dt-row,
+.modal--desktop .pwd-row,
+.modal--desktop .host-key-row {
+  min-width: 0;
+}
+
+.modal--desktop .dt-row {
+  gap: 8px;
+}
+
+.modal--desktop .hint {
+  grid-column: 2;
+  margin-top: -4px;
+  color: var(--text-low);
+  line-height: 1.45;
+}
+
+.modal--desktop .pwd-roll,
+.modal--desktop .pwd-eye,
+.modal--desktop .host-key-copy {
+  min-height: 34px;
+  height: 34px;
+  border-radius: 4px;
+  padding: 0 12px;
+}
+
+.modal--desktop .host-key {
+  min-height: 34px;
+  border-radius: 4px;
+  justify-content: flex-start;
+  padding: 7px 10px;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
+
+.modal--desktop .modal-foot .btn {
+  height: 40px;
+  min-width: 96px;
+  border-radius: 4px;
+  padding: 0 20px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.modal--desktop .modal-foot .btn-primary {
+  min-width: 126px;
+  background: #2385e8;
+  color: #fff;
+  box-shadow: none;
+}
+
+.modal--desktop .modal-foot .btn-secondary {
+  color: #d7e8ff;
+  border-color: rgba(35, 133, 232, 0.55);
+  background: rgba(35, 133, 232, 0.14);
+}
+
+.modal--desktop .modal-foot .btn-ghost {
+  color: var(--text-hi);
+  border-color: var(--line-strong);
+  background: var(--bg-1);
+}
+
+.modal--desktop .confirm-message {
+  color: var(--text-mid);
+}
+
+/* Electron 外壳已为窗口控件条预留高度，iframe 内避免重复留白。 */
+html.desktop-embed.desktop-meeting .meeting-page {
+  padding-top: 0;
+}
+
+/* 复制反馈 */
+.toast-copy {
+  position: fixed;
+  left: 50%;
+  bottom: 34px;
+  transform: translateX(-50%);
+  z-index: 80;
+  background: var(--panel-solid);
+  border: 1px solid var(--line-strong);
+  color: var(--text-hi);
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  box-shadow: var(--shadow-card);
+  animation: toast-in 0.3s var(--ease-out) both;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(14px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

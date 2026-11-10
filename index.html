@@ -1,0 +1,30 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>云会议 · CloudMeet</title>
+    <script>
+      (function () {
+        var params = new URLSearchParams(window.location.search);
+        var queryTheme = params.get('theme');
+        var androidEmbed = params.get('android') === '1';
+        if (androidEmbed) {
+          document.documentElement.classList.add('android-embed');
+        }
+        if (queryTheme === 'light' || (androidEmbed && queryTheme !== 'dark')) {
+          document.documentElement.setAttribute('data-theme', 'light');
+          document.documentElement.style.colorScheme = 'light';
+        } else if (queryTheme === 'dark') {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          document.documentElement.style.colorScheme = 'dark';
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

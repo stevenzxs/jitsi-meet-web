@@ -1,0 +1,33 @@
+{
+  "name": "jitsi-meet-web",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "node scripts/run-regression.cjs",
+    "verify": "npm test && npm run build && npm run check:webview-syntax",
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview",
+    "check:webview-syntax": "node scripts/check-webview-syntax.mjs"
+  },
+  "dependencies": {
+    "@fontsource-variable/noto-sans-sc": "^5.3.0",
+    "@fontsource/sora": "^5.3.0",
+    "@noble/hashes": "^2.4.0",
+    "axios": "^1.19.0",
+    "qrcode": "^1.5.4",
+    "vue": "^3.5.40",
+    "vue-router": "^4.6.4"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "@types/qrcode": "^1.5.6",
+    "@vitejs/plugin-vue": "^6.0.8",
+    "@vue/tsconfig": "^0.9.1",
+    "acorn": "^8.18.0",
+    "typescript": "~6.0.2",
+    "vite": "^8.2.0",
+    "vue-tsc": "^3.3.8"
+  }
+}
