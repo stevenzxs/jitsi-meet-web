@@ -72,12 +72,29 @@ function makeIq(doc: Document, roomJid: string, from: string, name: string, attr
   return iq
 }
 
+// Never echo stanza XML/text: an error may contain the original credential IQ.
+function hostTransferRequestError(stanza: Element | null): Error {
+  if (!stanza) return new Error('主持权限请求超时，结果尚未确认，请保留当前页面并检查会议状态')
+  const error = Array.from(stanza.children).find(item => item.localName === 'error')
+  const condition = Array.from(error?.children ?? []).find(item =>
+    item.namespaceURI === 'urn:ietf:params:xml:ns:xmpp-stanzas' && item.localName !== 'text')?.localName
+  const messages: Record<string, string> = {
+    'service-unavailable': '当前会议服务未启用主持人转让，请联系管理员',
+    'not-allowed': '当前会话无权执行此主持权限操作',
+    'forbidden': '当前会话无权执行此主持权限操作',
+    'conflict': '主持权限状态冲突，请检查成员和待确认操作后重试',
+    'remote-server-timeout': '主持权限内部服务暂不可用，结果尚未确认，请勿重复创建操作',
+    'resource-constraint': '主持权限服务繁忙，请稍后重试',
+  }
+  return new Error((condition && messages[condition]) || '主持权限请求失败，结果尚未确认，请检查会议状态')
+}
+
 function iqRequest(connection: StropheConnection, doc: Document, roomJid: string,
   name: string, attributes: Record<string, string>): Promise<Element> {
   return new Promise((resolve, reject) => {
     try {
       connection.sendIQ(makeIq(doc, roomJid, connection.jid, name, attributes), resolve,
-        () => reject(new Error(`Host transfer ${name} failed`)), 10000)
+        stanza => reject(hostTransferRequestError(stanza)), 10000)
     } catch (error) { reject(error) }
   })
 }
